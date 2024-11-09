@@ -1,8 +1,9 @@
 from loguru import logger
 import numpy as np
+import pygame
 
 NEAREST_NEIGHBOUR_COUPLING_CONSTANT = 1
-BOLTZMANN_CONSTANT = 1.38e-23
+BOLTZMANN_CONSTANT = 1
 
 class Simulation:
     
@@ -10,6 +11,7 @@ class Simulation:
         self.width = width
         self.height = height
         self.spins = [[int(np.random.choice([-1, +1])) for _ in range(self.width)] for _ in range(self.height)]
+        self.average_spin_over_time = []
     
     def update(self, delta, temperature):
         # Calculate energy for every spin.
@@ -32,6 +34,9 @@ class Simulation:
         
         # Overwrite old spins.
         self.spins = new_spins
+        
+        # Append average spin to cummulative list.
+        self.average_spin_over_time.append(self.get_average_spin())
     
     def get_spin(self, x, y):
         """
@@ -43,8 +48,30 @@ class Simulation:
             return None
         return self.spins[y][x]
     
-    def render(self, display):
-        pass
+    def get_average_spin(self):
+        return sum([sum(row) for row in self.spins]) / (self.width * self.height)
+    
+    def render(self, display, font, resolution):
+        for y, row in enumerate(self.spins):
+            for x, spin in enumerate(row):
+                self.render_spin(display, resolution, x, y, spin)
+    
+    def render_spin(self, display, resolution, x, y, spin):
+        # Calculate screen position.
+        SPIN_SEPARATION = 50
+        spin_x = resolution[0] / 2 + (x - self.width / 2) * SPIN_SEPARATION
+        spin_y = resolution[1] / 2 + (y - self.height / 2) * SPIN_SEPARATION
+        
+        # Render arrow at spin position.
+        pygame.draw.line(display, (255, 255, 255), (spin_x, spin_y - 10), (spin_x, spin_y + 10))
+        if spin == -1:
+            pygame.draw.line(display, (255, 255, 255), (spin_x, spin_y + 10), (spin_x - 4, spin_y + 6))
+            pygame.draw.line(display, (255, 255, 255), (spin_x, spin_y + 10), (spin_x + 4, spin_y + 6))
+        elif spin == +1:
+            pygame.draw.line(display, (255, 255, 255), (spin_x, spin_y - 10), (spin_x - 4, spin_y - 6))
+            pygame.draw.line(display, (255, 255, 255), (spin_x, spin_y - 10), (spin_x + 4, spin_y - 6))
+        else:
+            pygame.draw.circle(display, (0, 0, 255), (spin_x, spin_y), 10)
 
 def calculate_spin_energy(spin, neighbour_spins):
     """
@@ -63,8 +90,8 @@ def calculate_spin_energy(spin, neighbour_spins):
 
 def pick_random_spin(energy, temperature):
     # Calculate proportionality factor for spin up and spin down.
-    spin_up_factor   = np.exp(energy * temperature * BOLTZMANN_CONSTANT)
-    spin_down_factor = np.exp(energy * temperature * BOLTZMANN_CONSTANT)
+    spin_up_factor   = np.exp(-energy / (temperature * BOLTZMANN_CONSTANT))
+    spin_down_factor = np.exp(energy / (temperature * BOLTZMANN_CONSTANT))
     
     # Calculate normalized probabilities.
     spin_up_prob   = spin_up_factor / (spin_up_factor + spin_down_factor)

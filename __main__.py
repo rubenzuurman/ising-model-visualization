@@ -1,10 +1,9 @@
 from src.simulation import Simulation
+from src.visualizer import window
 
 def main():
     sim = Simulation(width=10, height=10)
-    print(sim.spins)
-    sim.update(delta=0.01, temperature=1)
-    print(sim.spins)
+    window(resolution=(1920, 1080), simulation=sim)
 
 if __name__ == "__main__":
     main()
