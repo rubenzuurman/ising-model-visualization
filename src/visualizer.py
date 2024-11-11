@@ -91,7 +91,7 @@ def window(resolution=(1920, 1080), simulation=None):
         pygame.display.flip()
         
         # Tick clock.
-        clock.tick(10)
+        clock.tick(30)
     
     # Quit pygame.
     pygame.quit()
