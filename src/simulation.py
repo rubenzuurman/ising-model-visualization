@@ -2,29 +2,40 @@ from loguru import logger
 import numpy as np
 import pygame
 
-NEAREST_NEIGHBOUR_COUPLING_CONSTANT = 1
-BOLTZMANN_CONSTANT = 1
+from src.constants import *
 
 class Simulation:
     
-    def __init__(self, width=10, height=10):
+    def __init__(self, width=10, height=10, mode="nearest_neighbour"):
         self.width = width
         self.height = height
         self.spins = [[int(np.random.choice([-1, +1])) for _ in range(self.width)] for _ in range(self.height)]
         self.average_spin_over_time = []
+        
+        # Set mode.
+        available_modes = ["nearest_neighbour"]
+        if not (mode in available_modes):
+            logger.critical(f"Mode '{mode}' is not a valid mode! (Options: {available_modes})")
+        self.mode = mode
     
-    def update(self, delta, temperature):
+    def update(self, temperature):
         # Calculate energy for every spin.
         energy_matrix = [[0 for _ in range(self.width)] for _ in range(self.height)]
         for y, row in enumerate(self.spins):
             for x, spin in enumerate(row):
-                neighbour_spin_left   = self.get_spin(x - 1, y)
-                neighbour_spin_right  = self.get_spin(x + 1, y)
-                neighbour_spin_bottom = self.get_spin(x, y - 1)
-                neighbour_spin_top    = self.get_spin(x, y + 1)
-                neighbour_spins = [neighbour_spin_left, neighbour_spin_right, neighbour_spin_bottom, neighbour_spin_top]
-                neighbour_spins = [spin for spin in neighbour_spins if not (spin is None)]
-                energy_matrix[y][x] = calculate_spin_energy(spin, neighbour_spins)
+                if self.mode == "nearest_neighbour":
+                    # Get nearest neighbour spins.
+                    neighbour_spin_left   = self.get_spin(x - 1, y)
+                    neighbour_spin_right  = self.get_spin(x + 1, y)
+                    neighbour_spin_bottom = self.get_spin(x, y - 1)
+                    neighbour_spin_top    = self.get_spin(x, y + 1)
+                    neighbour_spins = [neighbour_spin_left, neighbour_spin_right, neighbour_spin_bottom, neighbour_spin_top]
+                    
+                    # Keep only spins that are not None (e.g. spins that are in the field and thus actually exist).
+                    neighbour_spins = [spin for spin in neighbour_spins if not (spin is None)]
+                    
+                    # Calculate energy from nearest neighbours and store into energy matrix.
+                    energy_matrix[y][x] = calculate_nearest_neighbour_spin_energy(spin, neighbour_spins)
         
         # Random choose next spin value for each spin from the energy.
         new_spins = [[0 for _ in range(self.width)] for _ in range(self.height)]
@@ -73,16 +84,10 @@ class Simulation:
         else:
             pygame.draw.circle(display, (0, 0, 255), (spin_x, spin_y), 10)
 
-def calculate_spin_energy(spin, neighbour_spins):
+def calculate_nearest_neighbour_spin_energy(spin, neighbour_spins):
     """
     Calculate U_i for this particular spin. This function will be more specific in the future, when more 'exotic' interactions are examined (e.g. next-nearest neighbours, general interaction between all spins, or external fields). Specifically, this function will have a name involving 'nearest_neighbours' or something.
     """
-    # Warn user in various cases.
-    if NEAREST_NEIGHBOUR_COUPLING_CONSTANT < 0:
-        logger.warning("Coupling constant (J) is negative, this might make the simulation have undesired behaviour.")
-    if NEAREST_NEIGHBOUR_COUPLING_CONSTANT == 0:
-        logger.warning("Coupling constant (J) is zero, this disables spin interaction.")
-    
     # Calculate energy.
     J = NEAREST_NEIGHBOUR_COUPLING_CONSTANT
     energy = -J/2 * spin * sum(neighbour_spins)

@@ -30,7 +30,7 @@ where $N$ is the number of spins, $z$ is the number of nearest neighbours of eac
 we can calculate the average of spin $i$ to be
 
 \begin{equation}
-    \langle S_i \rangle = \sum_{S_1} \dotsb \sum_{S_N} S_i \frac{e^-{\beta \mathcal{H}_{MF}}}{Z_{MF}} = \frac{\sum_{S_1} \dotsb \sum_{S_N} S_i e^{-\beta \mathcal{H}_{MF}}}{\sum_{S_1} \dotsb \sum_{S_N} e^{-\beta \mathcal{H}_{MF}}} = \frac{\sum_{S_i} S_i e^{\beta J z \langle S \rangle S_i}}{\sum_{S_i} e^{\beta J z \langle S \rangle S_i}} = \tanh{(\beta J z \langle S \rangle)}
+    \langle S_i \rangle = \sum_{S_1} \dotsb \sum_{S_N} S_i \frac{e^{-\beta \mathcal{H}_{MF}}}{Z_{MF}} = \frac{\sum_{S_1} \dotsb \sum_{S_N} S_i e^{-\beta \mathcal{H}_{MF}}}{\sum_{S_1} \dotsb \sum_{S_N} e^{-\beta \mathcal{H}_{MF}}} = \frac{\sum_{S_i} S_i e^{\beta J z \langle S \rangle S_i}}{\sum_{S_i} e^{\beta J z \langle S \rangle S_i}} = \tanh{(\beta J z \langle S \rangle)}
 \end{equation}
 
 where we have cancelled the factor $e^{\frac{J N z}{2} \langle S \rangle ^2}$ on the top and bottom, we have also cancelled all the sums which do not depend on $S_i$, since they will all be equal. Since all spins are similar and we have introduced no asymmetries into the system, we define $m \equiv \langle S_i \rangle = \langle S \rangle$, and equation (5) becomes
@@ -46,3 +46,12 @@ In this project we will try to verify that this phase transition actually happen
 
 ## Future Goals
 As future aspirations we will try to graphically visualize the average spin as a function of temperature. At some point we will also attempt to introduce an external field and determine how this changes the behaviour of the simulation. In particular, we are interested in seeing if the simulation "collapses" to a majority spin-up or spin-down as a result of the external field.
+
+## Results
+The figure below shows the results from the simulation using only nearest neighbour interactions, where the coupling constant between some spin and its nearest neighbours $J=1$, and the Boltzmann constant $k_B = 1$.
+
+![Nearest Neighbour Interactions](markdown/nearest_neighbour_graph.png)
+
+Since this is a 2D simulation, the number of nearest neighbours $z = 4$ and thus we expect a phase transition at a critical temperature of $T_c = \frac{Jz}{k_B} = z = 4$. We do observe this in the theoretical predictions. However, the simulation results indicate the phase transition is not as abrupt as theory predicts. We argue this is a result of the mean-field approximation we used to find the theoretical predictions.
+
+An interesting observation is the fact that the simulation always seems to collapse to positive average spin. We currently have no clue what could be the cause of this. We also only take the positive solution ($m=+m_f$) in the theoretical prediction because of this, the negative solution ($m=-m_f$) is ignored.
