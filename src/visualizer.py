@@ -8,11 +8,43 @@ class TemperatureController:
         self.temperature = initial_temperature
         
         # Variables to keep track of if the control keys have been released after being pressed.
-        self.up_released = True
-        self.down_released = True
+        self.right_released = True
+        self.left_released = True
     
     def get_temperature(self):
         return self.temperature
+    
+    def handle_inputs(self, keys_pressed):
+        # Reset released flags.
+        if not keys_pressed[pygame.K_RIGHT]:
+            self.right_released = True
+        if not keys_pressed[pygame.K_LEFT]:
+            self.left_released = True
+        
+        # Check if temperature needs to be updated.
+        if keys_pressed[pygame.K_RIGHT] and self.right_released:
+            self.temperature *= 2
+            self.right_released = False
+        if keys_pressed[pygame.K_LEFT] and self.left_released:
+            self.temperature /= 2
+            self.left_released = False
+
+class ZoomController:
+    
+    def __init__(self, initial_zoom):
+        # Zoom variables.
+        self.zoom = initial_zoom
+        self.zoom_target = self.zoom
+        
+        # Variables to keep track of if the control keys have been released after being pressed.
+        self.up_released = True
+        self.down_released = True
+    
+    def get_zoom(self):
+        return self.zoom
+    
+    def get_zoom_target(self):
+        return self.zoom_target
     
     def handle_inputs(self, keys_pressed):
         # Reset released flags.
@@ -21,13 +53,19 @@ class TemperatureController:
         if not keys_pressed[pygame.K_DOWN]:
             self.down_released = True
         
-        # Check if temperature needs to be updated.
+        # Check if zoom needs to be updated.
         if keys_pressed[pygame.K_UP] and self.up_released:
-            self.temperature *= 2
+            self.zoom_target *= 2
             self.up_released = False
         if keys_pressed[pygame.K_DOWN] and self.down_released:
-            self.temperature /= 2
+            self.zoom_target /= 2
             self.down_released = False
+        
+        # Approach zoom target with first order response.
+        zoom_speed = 0.25
+        self.zoom += (self.zoom_target - self.zoom) * zoom_speed
+        if abs((self.zoom_target - self.zoom) / self.zoom_target) < 0.01:
+            self.zoom = self.zoom_target
 
 def window(resolution=(1920, 1080), simulation=None):
     if simulation is None:
@@ -51,6 +89,7 @@ def window(resolution=(1920, 1080), simulation=None):
     
     # Simulation parameters.
     temperature_controller = TemperatureController(initial_temperature=10)
+    zoom_controller = ZoomController(initial_zoom=1)
     
     # Main loop.
     clock = pygame.time.Clock()
@@ -71,19 +110,25 @@ def window(resolution=(1920, 1080), simulation=None):
         temperature_controller.handle_inputs(keys_pressed)
         temperature = temperature_controller.get_temperature()
         
+        # Handle zoom control.
+        zoom_controller.handle_inputs(keys_pressed)
+        zoom = zoom_controller.get_zoom()
+        zoom_target = zoom_controller.get_zoom_target()
+        
         # Clear display.
         display.fill((0, 0, 0))
         
         # Render world.
         simulation.update(temperature=temperature)
-        simulation.render(display, font, resolution)
+        simulation.render(display, font, resolution, zoom=zoom)
         
         # Get average spin.
         average_spin = simulation.get_average_spin()
         
         # Render debug text.
         render_text_topleft(display, font, f"Temperature: {temperature}", (10, 10), (255, 0, 0))
-        render_text_topleft(display, font, f"Average spin: {average_spin:.2f}", (10, 30), (255, 0, 0))
+        render_text_topleft(display, font, f"Zoom: {zoom} (zoom target: {zoom_target})", (10, 30), (255, 0, 0))
+        render_text_topleft(display, font, f"Average spin: {average_spin:.2f}", (10, 50), (255, 0, 0))
         
         render_graph(display, small_font, big_font, x=range(len(simulation.average_spin_over_time)), y=simulation.average_spin_over_time, position=(20, resolution[1] / 2 + 100), size=(400, 200), axes_color=(255, 255, 255), raw_data_color=(0, 0, 255), moving_average_color=(255, 0, 0), title="Average Spin over Time", x_axis_label="Time", y_axis_label="Average Spin")
         
