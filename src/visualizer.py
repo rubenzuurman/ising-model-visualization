@@ -67,6 +67,24 @@ class ZoomController:
         if abs((self.zoom_target - self.zoom) / self.zoom_target) < 0.01:
             self.zoom = self.zoom_target
 
+class RenderModeController:
+    
+    def __init__(self, initial_mode):
+        # Render "arrow" or "rectangle" per spin.
+        available_modes = ["arrow", "rectangle"]
+        if not (initial_mode in available_modes):
+            logger.critical(f"Unrecognized render mode: '{initial_mode}'.")
+        self.render_mode = initial_mode
+    
+    def get_render_mode(self):
+        return self.render_mode
+    
+    def handle_inputs(self, keys_pressed):
+        if keys_pressed[pygame.K_a]:
+            self.render_mode = "arrow"
+        if keys_pressed[pygame.K_r]:
+            self.render_mode = "rectangle"
+    
 def window(resolution=(1920, 1080), simulation=None):
     if simulation is None:
         logger.critical("Simulation cannot be None! Please supply a simulation.")
@@ -90,6 +108,7 @@ def window(resolution=(1920, 1080), simulation=None):
     # Simulation parameters.
     temperature_controller = TemperatureController(initial_temperature=10)
     zoom_controller = ZoomController(initial_zoom=1)
+    render_mode_controller = RenderModeController(initial_mode="arrow")
     
     # Main loop.
     clock = pygame.time.Clock()
@@ -115,12 +134,16 @@ def window(resolution=(1920, 1080), simulation=None):
         zoom = zoom_controller.get_zoom()
         zoom_target = zoom_controller.get_zoom_target()
         
+        # Handle render mode control.
+        render_mode_controller.handle_inputs(keys_pressed)
+        render_mode = render_mode_controller.get_render_mode()
+        
         # Clear display.
         display.fill((0, 0, 0))
         
         # Render world.
         simulation.update(temperature=temperature)
-        simulation.render(display, font, resolution, zoom=zoom)
+        simulation.render(display, font, resolution, zoom=zoom, render_mode=render_mode)
         
         # Get average spin.
         average_spin = simulation.get_average_spin()
@@ -128,7 +151,10 @@ def window(resolution=(1920, 1080), simulation=None):
         # Render debug text.
         render_text_topleft(display, font, f"Temperature: {temperature}", (10, 10), (255, 0, 0))
         render_text_topleft(display, font, f"Zoom: {zoom} (zoom target: {zoom_target})", (10, 30), (255, 0, 0))
-        render_text_topleft(display, font, f"Average spin: {average_spin:.2f}", (10, 50), (255, 0, 0))
+        render_text_topleft(display, font, f"Render mode: {render_mode}", (10, 50), (255, 0, 0))
+        render_text_topleft(display, font, f"Average spin: {average_spin:.2f}", (10, 70), (255, 0, 0))
+        
+        render_text_center(display, font, f"Controls: [temperature: left/right, zoom: up/down, render mode: (A)rrow/(R)ectangle]", (255, 0, 0), (resolution[0] / 2, 20))
         
         render_graph(display, small_font, big_font, x=range(len(simulation.average_spin_over_time)), y=simulation.average_spin_over_time, position=(20, resolution[1] / 2 + 100), size=(400, 200), axes_color=(255, 255, 255), raw_data_color=(0, 0, 255), moving_average_color=(255, 0, 0), title="Average Spin over Time", x_axis_label="Time", y_axis_label="Average Spin")
         

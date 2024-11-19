@@ -62,12 +62,17 @@ class Simulation:
     def get_average_spin(self):
         return sum([sum(row) for row in self.spins]) / (self.width * self.height)
     
-    def render(self, display, font, resolution, zoom):
+    def render(self, display, font, resolution, zoom, render_mode):
         for y, row in enumerate(self.spins):
             for x, spin in enumerate(row):
-                self.render_spin(display, resolution, x, y, spin, zoom)
+                if render_mode == "arrow":
+                    self.render_spin_arrow(display, resolution, x, y, spin, zoom)
+                elif render_mode == "rectangle":
+                    self.render_spin_rectangle(display, resolution, x, y, spin, zoom)
+                else:
+                    continue
     
-    def render_spin(self, display, resolution, x, y, spin, zoom):
+    def render_spin_arrow(self, display, resolution, x, y, spin, zoom):
         # Calculate screen position.
         SPIN_SEPARATION = 50
         spin_x = resolution[0] / 2 + (x - self.width / 2) * SPIN_SEPARATION * zoom
@@ -84,6 +89,21 @@ class Simulation:
             pygame.draw.line(display, (255, 255, 255), (spin_x, spin_y - half_line_length), (spin_x + half_line_length * 0.4, spin_y - half_line_length * 0.6))
         else:
             pygame.draw.circle(display, (0, 0, 255), (spin_x, spin_y), half_line_length)
+    
+    def render_spin_rectangle(self, display, resolution, x, y, spin, zoom):
+        # Calculate screen position.
+        SPIN_SEPARATION = 50
+        spin_x = resolution[0] / 2 + (x - self.width / 2) * SPIN_SEPARATION * zoom
+        spin_y = resolution[1] / 2 + (y - self.height / 2) * SPIN_SEPARATION * zoom
+        
+        # Render rectangle at spin position.
+        if spin == 1:
+            rect_color = (0, 255, 0)
+        elif spin == -1:
+            rect_color = (255, 0, 0)
+        else:
+            rect_color = (0, 0, 255)
+        pygame.draw.rect(display, rect_color, (spin_x, spin_y, SPIN_SEPARATION * zoom, SPIN_SEPARATION * zoom))
 
 def calculate_nearest_neighbour_spin_energy(spin, neighbour_spins):
     """

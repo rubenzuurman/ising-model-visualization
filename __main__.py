@@ -25,7 +25,7 @@ def generate_graphs():
     generator.nearest_neighbour_coupling_mean_magnetization()
 
 def run_visualizer():
-    sim = Simulation(width=50, height=50, mode="nearest_neighbour")
+    sim = Simulation(width=100, height=100, mode="nearest_neighbour")
     window(resolution=(1920, 1080), simulation=sim)
 
 def main():
